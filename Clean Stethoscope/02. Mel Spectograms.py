@@ -22,22 +22,58 @@ samprate = 44100
 
 #%%
 
-''' GENERATE MEL SPECTOGRAMS FOR SIGNALS '''
+''' MAKE SIGNALS MONO AUDIO '''
 
 # select only one channel of stereo signal, and transpose ready for melspectogram
 signals_mono = [signals[i].T[0] for i in range(len(signals))]
 
-# create the mel spectogram power 
-# hop_length = 512 (number of frames skipped until next window). this gives one bucket every 0.13s, which could be changed
-# n_fft = 1024 (number of frames either side to calculate the FFT)
-mel = [melspectrogram(signals_mono[i],sr=samprate,hop_length=2550,n_fft=11025,n_mels=45,fmin=125,fmax=500) for i in range(len(signals_mono))]
 
-# convert the power spectogram to dB
-mel_db = [librosa.power_to_db(mel[i],ref=np.max) for i in range(len(mel))]
+#%%
+
+''' GENERATE MEL SPECTOGRAMS FOR SIGNALS '''
+
+hop_length = 2550  # number of frames to jump when computing fft
+fmin = 125  # bottom frequency to look at
+fmax = 500  # top frequency to look at
+n_mels = 45  # number of audio frequency bins
+n_fft = [8000, 11025, 14000]  # width of the fft windows
+
+
+# list of width 3 different mels per length 10 signals
+mel_db_grid = []
+
+for i in range(len(signals_mono)):
+    
+    mel = [melspectrogram(
+            signals_mono[i],
+            sr = samprate,
+            hop_length = 2550,
+            n_fft = j,
+            n_mels = 45,
+            fmin = 125,
+            fmax = 500) for j in n_fft]
+    
+    mel_db = [librosa.power_to_db(mel[k],ref=np.max) for k in range(len(mel))]
+    
+    mel_db_grid.append(mel_db)
+
+
+#%%
+# find shape of mels
+print(mel_db_grid[0][2].shape)
+
+
+
+
+
+
+
+
 
 
 #%%
 
+''' JUST USE FOR VISUALISATION, NOT INPUT TO MODEL '''
 ''' SAVE MELSPECTOGRAMS TO FILE '''
 
 for i in range(len(mel_db)):
@@ -147,4 +183,30 @@ plt.show()
 plt.close()
 
 
+#%%
 
+''' LOOK AT MELS OF 3 DIFFERENT FFT WINDOWS, SAME HOP AND NMELS '''
+
+fmin = 125
+fmax = 500
+signalnum = 3
+
+plt.figure(figsize=(10,15))
+
+meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=2550,n_fft=8000,fmin=fmin,fmax=fmax,n_mels=45)
+meltest_db = librosa.power_to_db(meltest,ref=np.max)
+plt.subplot(3,1,1)
+plt.title('FFT 8000 Freqs 45 Hop 2550')
+specshow(meltest_db,sr=samprate,x_axis='frames')
+
+meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=2550,n_fft=11025,fmin=fmin,fmax=fmax,n_mels=45)
+meltest_db = librosa.power_to_db(meltest,ref=np.max)
+plt.subplot(3,1,2)
+plt.title('FFT 11025 Freqs 45 Hop 2550')
+specshow(meltest_db,sr=samprate)
+
+meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=2550,n_fft=14000,fmin=fmin,fmax=fmax,n_mels=45)
+meltest_db = librosa.power_to_db(meltest,ref=np.max)
+plt.subplot(3,1,3)
+plt.title('FFT 14000 Freqs 45 Hop 2550')
+specshow(meltest_db,sr=samprate)
