@@ -44,33 +44,33 @@ for i in range(len(signals)):
     img = np.array(img)
     
     for j in range(n_pixel_splits):
-        imgslice = img[0:3525,j*npixels:(j+1)*npixels,0:3] # 3525 takes out bottom 2 freq bins, dumps final dimension of 255s
+        imgslice = img[:,j*npixels:(j+1)*npixels,0:3] # dumps final dimension of 255s
         imgslice = Image.fromarray(imgslice)
         
         if labels[(i*250)+j] == 1:
-            imgslice.save(filepath+'Slices_tightlabels/positive_slice{}.png'.format(i*250+j),'PNG')
+            imgslice.save(filepath+'Slices Tight Labels/positive_slice{}.png'.format(i*250+j),'PNG')
         else:
-            imgslice.save(filepath+'Slices_tightlabels/negative_slice{}.png'.format(i*250+j),'PNG')
+            imgslice.save(filepath+'Slices Tight Labels/negative_slice{}.png'.format(i*250+j),'PNG')
 
             
 #%%
             
-''' CREATE TRAIN AND TEST FOLDERS AND SPLIT DATA '''
+''' CREATE TRAIN AND TEST FOLDERS '''
 
 import os, shutil
 
-original_dataset_dir = "/users/garethjones/Documents/Data Science/Feebris/Data/Clean Stethoscope/Spectograms/Slices_tightlabels"
+original_dataset_dir = "/users/garethjones/Documents/Data Science/Feebris/Data/Clean Stethoscope/Spectograms/Slices Tight Labels"
 
 dirs = []
 
 base_dir = "/users/garethjones/Documents/Data Science/Feebris/Data/Clean Stethoscope/Spectograms/"
 dirs.append(base_dir)
 
-train_dir = os.path.join(base_dir, "train_tightlabels")
+train_dir = os.path.join(base_dir, "train_tight_labels")
 dirs.append(train_dir)
-val_dir = os.path.join(base_dir, "validation_tightlabels")
+val_dir = os.path.join(base_dir, "validation_tight_labels")
 dirs.append(val_dir)
-test_dir = os.path.join(base_dir, "test_tightlabels")
+test_dir = os.path.join(base_dir, "test_tight_labels")
 dirs.append(test_dir)
 
 train_positive_dir = os.path.join(train_dir, "positive")
@@ -172,4 +172,4 @@ print('Val positives = '+str(len(os.listdir(val_positive_dir))))
 print('Val negatives = '+str(len(os.listdir(val_negative_dir))))
 print('Test positives = '+str(len(os.listdir(test_positive_dir))))
 print('Test negatives = '+str(len(os.listdir(test_negative_dir))))
-print('Positive/Negative ratio = '+str(len(os.listdir(train_positive_dir))/len(os.listdir(train_negative_dir))))
+print('Proportion positive = '+str(len(os.listdir(train_positive_dir))/(len(os.listdir(train_negative_dir))+len(os.listdir(train_positive_dir)))))

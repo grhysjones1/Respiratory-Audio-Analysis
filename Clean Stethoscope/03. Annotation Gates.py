@@ -97,7 +97,7 @@ plt.close()
 
 ''' EXPAND WIDTH OF STEPS '''
 
-expand_window = int(samprate/6) # equates to roughly a third second error
+expand_window = int(samprate/4) # equates to roughly a quarter second error
 
 # get list of indices where anno_gate signal is 1
 index_list = []

@@ -16,19 +16,19 @@ datagen = ImageDataGenerator(rescale=1.0/255.0)
 
 train_generator = datagen.flow_from_directory(
     train_dir,
-    target_size = (3525,24),
+    target_size = (4000,24),
     batch_size = 25,
     class_mode = "binary")
 
 val_generator = datagen.flow_from_directory(
     val_dir,
-    target_size = (3525,24),
+    target_size = (4000,24),
     batch_size = 25,
     class_mode = "binary")
 
 test_generator = datagen.flow_from_directory(
         test_dir,
-        target_size = (3525,24),
+        target_size = (4000,24),
         batch_size = 25,
         class_mode = 'binary')
 
@@ -56,7 +56,7 @@ print(len(images))
 from keras import models, layers, optimizers
 
 model_1 = models.Sequential()
-model_1.add(layers.Conv2D(32,(3,3),activation='relu',input_shape=(3525,24,3)))
+model_1.add(layers.Conv2D(32,(3,3),activation='relu',input_shape=(4000,24,3)))
 model_1.add(layers.MaxPooling2D((2,2)))
 model_1.add(layers.Conv2D(64, (3,3), activation="relu"))
 model_1.add(layers.MaxPooling2D((2,2)))
@@ -113,7 +113,7 @@ plt.close()
 ''' TRY SLIGHTLY DIFFERENT MODEL '''
 
 model_2 = models.Sequential()
-model_2.add(layers.Conv2D(16,(3,3),activation='relu',input_shape=(3525,24,3)))
+model_2.add(layers.Conv2D(16,(3,3),activation='relu',input_shape=(4000,24,3)))
 model_2.add(layers.MaxPooling2D((2,2)))
 model_2.add(layers.Conv2D(32, (3,3), activation="relu"))
 model_2.add(layers.MaxPooling2D((2,2)))
@@ -129,6 +129,8 @@ model_2.compile(
     loss="binary_crossentropy",
     metrics=["accuracy"]
     )
+
+#%%
 
 history_2 = model_2.fit_generator(
     train_generator,
