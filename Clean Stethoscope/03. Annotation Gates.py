@@ -95,8 +95,56 @@ plt.close()
 
 #%%
 
-''' EXPAND WIDTH OF STEPS '''
+''' REDUCE ANNOTATIONS TO LENGTH OF MEL SPECTROGRAM '''
 
+# set the search window and hop size to same as the melspectrogram
+hop_size = 2550
+search_window = 11025
+
+# find index points to look at in annotation signal
+indices = list(np.arange(0,len(anno_gate),2550))
+
+# now look across the annotation signal and max if there's a 1 in the window frame
+labels_list = []
+for i in range(len(anno_gates)):
+    labels = []
+    
+    for j in indices:    
+        if ((j - search_window/2) > 0) & ((j + search_window/2) < len(anno_gates[i])):
+            label_window = anno_gates[i][int(j-search_window/2):int(j+search_window/2)]
+            max_label = max(label_window)
+            labels.append(max_label)
+        
+        elif (j - search_window/2) < 0:
+            label_window = anno_gates[i][0:int(j+search_window/2)]
+            max_label = max(label_window)
+            labels.append(max_label)
+        
+        elif (j + search_window/2) > len(anno_gates[i]):
+            label_window = anno_gates[i][int(j-search_window/2):len(anno_gates[i])]
+            max_label = max(label_window)
+            labels.append(max_label)
+    
+    labels_list.append(labels)
+
+#%%%
+        
+''' VISUALISE '''
+fig,axs = plt.subplots(2,1,figsize=(12,8))
+axs[0].plot(labels_list[2])
+axs[0].set_title('New Labels (1040 Frames)')
+axs[1].plot(anno_gates[2])
+axs[1].set_title('Original Annotation Signal')
+plt.show()
+plt.close()
+
+#%%
+
+''' EXPAND WIDTH OF STEPS '''
+''' THIS SHOULD BE DONE ON THE MEL SPECTOGRAM LABELS, NOT IN THE SIGNAL!!! '''
+
+
+'''
 expand_window = int(samprate/4) # equates to roughly a quarter second error
 
 # get list of indices where anno_gate signal is 1
@@ -117,7 +165,7 @@ for i in range(len(index_list)):
         else:
             for k in range(j-expand_window,len(anno_gates[i])):
                 anno_gates[i][k] = 1
-
+'''
 
 #%%
             
