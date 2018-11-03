@@ -39,8 +39,8 @@ n_mels = 45  # number of audio frequency bins
 n_fft = [8000, 11025, 14000]  # width of the fft windows
 
 
-# list of width 3 different mels per length 10 signals
-mel_db_grid = []
+# list of 10 mels, with depth 3
+mel_db_list = []
 
 for i in range(len(signals_mono)):
     
@@ -55,19 +55,15 @@ for i in range(len(signals_mono)):
     
     mel_db = [librosa.power_to_db(mel[k],ref=np.max) for k in range(len(mel))]
     
-    mel_db_grid.append(mel_db)
+    mel_db = np.stack(mel_db,axis=-1)
+    
+    mel_db_list.append(mel_db)
+
 
 
 #%%
 # find shape of mels
 print(mel_db_grid[0][2].shape)
-
-
-
-
-
-
-
 
 
 

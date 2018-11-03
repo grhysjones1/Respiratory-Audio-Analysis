@@ -102,7 +102,7 @@ hop_size = 2550
 search_window = 11025
 
 # find index points to look at in annotation signal
-indices = list(np.arange(0,len(anno_gate),2550))
+indices = list(np.arange(0,len(anno_gates[0]),2550))
 
 # now look across the annotation signal and max if there's a 1 in the window frame
 labels_list = []
