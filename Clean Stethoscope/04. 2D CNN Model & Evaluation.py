@@ -10,10 +10,10 @@ Created on Sat Nov  3 23:14:35 2018
 
 ''' BUILD 2D CONV MODEL '''
 
-from keras import models,layers,optimizers
+from keras import models, layers, optimizers
 
 model = models.Sequential()
-model.add(layers.Conv2D(32,(5,3),activation='relu',input_shape=(45,15,3)))
+model.add(layers.Conv2D(32,(5,3),activation='relu',input_shape=(mel_slices_train[0].shape[0],mel_slices_train[0].shape[1],mel_slices_train[0].shape[2])))
 model.add(layers.MaxPooling2D((3,1)))
 model.add(layers.Conv2D(64, (3,3), activation="relu"))
 model.add(layers.MaxPooling2D((3,3)))
@@ -32,15 +32,39 @@ model.compile(
 
 #%%
 
-''' FIT MODEL ON TRAINING DATA '''
+''' FIT MODEL '''
 
-history = model.fit(
-        mel_slices_train,
-        labels_train,
-        batch_size=32,
-        epochs = 100,
-        validation_data = (mel_slices_val,labels_val),
-        verbose=1)
+# choose to fit on imbalanced or balanced data
+X_train = mel_slices_train
+y_train = labels_train
+X_val = mel_slices_val
+y_val = labels_val
+X_test = mel_slices_test
+y_test = labels_test
+
+history = model.fit(X_train, y_train, batch_size=32, epochs=50, validation_data=(X_val,y_val), verbose=1)
+
+
+#%%
+
+''' EVALUATE MODEL '''
+
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+# calculate model test predictions
+y_pred = model.predict(X_test)
+
+# calculate necessary metrics
+fpr, tpr, thresholds = roc_curve(y_test,y_pred)
+precision, recall, _ = precision_recall_curve(y_test, y_pred)
+
+# precision is how many of the frames it said were breath onset actually were
+print('Model Precision Score = {:.3f}'.format(precision_score(y_test, y_pred.round())))
+
+# recall is how many of the breath onset frames in total the model managed to identify
+# if recall is low, then it still needs to find more of the breath onsets. meaning we want to make the image better probably
+print('Model Recall Score = {:.3f}'.format(recall_score(y_test, y_pred.round())))
+print('Model F1 Score = {:.3f}'.format(f1_score(y_test, y_pred.round()))+' (best at 1)')
 
 
 #%%
@@ -74,8 +98,8 @@ from sklearn.utils.fixes import signature
 y_pred = model.predict(mel_slices_rebal_test)
 
 # calculate necessary metrics
-fpr, tpr, thresholds = roc_curve(labels_rebal_test,y_pred)
-precision, recall, _ = precision_recall_curve(labels_rebal_test, y_pred)
+fpr, tpr, thresholds = roc_curve(y_test,y_pred)
+precision, recall, _ = precision_recall_curve(y_test, y_pred)
 
 # plot ROC and precision/recall curve
 fig,axs = plt.subplots(1,2,figsize=(15,5))
@@ -95,7 +119,3 @@ axs[1].set_title('Precision/Recall curve')
 
 plt.show()
 plt.close()
-
-print('Model Precision Score = {:.1%}'.format(precision_score(labels_rebal_test, y_pred.round())))
-print('Model Recall Score = {:.1%}'.format(recall_score(labels_rebal_test, y_pred.round())))
-print('Model F1 Score = {:.3f}'.format(f1_score(labels_rebal_test, y_pred.round()))+' (best at 1)')
