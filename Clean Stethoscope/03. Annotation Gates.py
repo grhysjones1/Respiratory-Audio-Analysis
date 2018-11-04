@@ -98,11 +98,11 @@ plt.close()
 ''' REDUCE ANNOTATIONS TO LENGTH OF MEL SPECTROGRAM '''
 
 # set the search window and hop size to same as the melspectrogram
-hop_size = 2550
-search_window = 11025
+hop_size = hop_length
+search_window = n_fft[1]
 
 # find index points to look at in annotation signal
-indices = list(np.arange(0,len(anno_gates[0]),2550))
+indices = list(np.arange(0,len(anno_gates[0]),hop_length))
 
 # now look across the annotation signal and max if there's a 1 in the window frame
 labels_list = []
@@ -137,6 +137,15 @@ axs[1].plot(anno_gates[2])
 axs[1].set_title('Original Annotation Signal')
 plt.show()
 plt.close()
+
+
+
+#%%
+for i in index_list:
+    for j in range(i-frame_add,i+frame_add+1):
+        labels_list_test[j] = 1
+
+
 
 #%%
 

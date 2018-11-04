@@ -75,14 +75,14 @@ indices_test = indices[int(0.9*len(mel_slices_normed_list)):len(mel_slices_norme
 assert len(indices_test)+len(indices_train)+len(indices_val) == len(mel_slices_normed_list)
 
 
-mel_slices_train = [mel_slices_normed_list[i] for i in indices_train]
-labels_train = np.asarray([labels_list_shrunk[i] for i in indices_train])
+mel_slices_train = np.array([mel_slices_normed_list[i] for i in indices_train])
+labels_train = np.array([labels_list_shrunk[i] for i in indices_train])
 
-mel_slices_val = [mel_slices_normed_list[i] for i in indices_val]
-labels_val = np.asarray([labels_list_shrunk[i] for i in indices_val])
+mel_slices_val = np.array([mel_slices_normed_list[i] for i in indices_val])
+labels_val = np.array([labels_list_shrunk[i] for i in indices_val])
 
-mel_slices_test = [mel_slices_normed_list[i] for i in indices_test]
-labels_test = np.asarray([labels_list_shrunk[i] for i in indices_test])
+mel_slices_test = np.array([mel_slices_normed_list[i] for i in indices_test])
+labels_test = np.array([labels_list_shrunk[i] for i in indices_test])
 
 assert len(mel_slices_train) == len(labels_train)
 assert len(mel_slices_val) == len(labels_val)
@@ -91,82 +91,53 @@ assert len(mel_slices_test) == len(labels_test)
 
 #%%
 
-from keras import models,layers,optimizers
+''' REBALANCE DATA '''
 
-model = models.Sequential()
-model.add(layers.Conv2D(32,(3,7),activation='relu',input_shape=(45,15,3)))
-model.add(layers.MaxPooling2D((3,1)))
-model.add(layers.Conv2D(64, (3,3), activation="relu"))
-model.add(layers.MaxPooling2D((3,1)))
-model.add(layers.Dense(256, activation="relu"))
-model.add(layers.Dropout(0.25))
-model.add(layers.Dense(1, activation="sigmoid"))
-model.summary()
+neg_label_indices = [index for index, x in enumerate(labels_list_shrunk) if x == 0]
+pos_label_indices = [index for index, x in enumerate(labels_list_shrunk) if x == 1]
+assert (len(pos_label_indices) + len(neg_label_indices)) == len(mel_slices_normed_list)
 
-model.compile(
-    optimizer=optimizers.RMSprop(lr=0.001),
-    loss="binary_crossentropy",
-    metrics=["accuracy"]
-    )
+neg_mel_slices = [mel_slices_normed_list[i] for i in neg_label_indices]
+pos_mel_slices = [mel_slices_normed_list[i] for i in pos_label_indices]
+assert (len(neg_mel_slices) + len(pos_mel_slices)) == len(mel_slices_normed_list)
+
+indices_to_choose = np.arange(0,len(neg_mel_slices))
+indices_to_sample = np.random.choice(indices_to_choose,len(pos_mel_slices))
+indices_to_sample = np.sort(indices_to_sample)
 
 
-#%%
+neg_mel_reduced = [neg_mel_slices[i] for i in indices_to_sample]
 
-def generator(
-    data,
-    lookback, 
-    delay,
-    min_index, 
-    max_index,
-    shuffle=False, 
-    batch_size=batch_size,
-    step=6):
+mel_slices_rebal = pos_mel_slices + neg_mel_reduced
+labels_rebal = np.concatenate((np.ones(len(pos_mel_slices)) , np.zeros(len(neg_mel_reduced))))
 
-    if max_index is None:
-        max_index = len(data) - delay - 1
-    i = min_index + lookback # TODO redundant?
-   
-    while True:
 
-        if shuffle:
-            rows = np.random.randint(
-                min_index + lookback,
-                max_index,
-                batch_size
-            )
-        else:
-            if i + batch_size >= max_index:
-                i = min_index + lookback
-            rows = np.arange(i, min(i + batch_size, max_index))
-            i += len(rows)
+indices = np.arange(0,len(mel_slices_rebal))
+np.random.shuffle(indices)
 
-        samples = np.zeros((len(rows), lookback // step, data.shape[-1]))
-        targets = np.zeros((len(rows),))
-        for j, row in enumerate(rows):
-            indices = range(rows[j] - lookback, rows[j], step)
-            samples[j] = data[indices]
-            targets[j] = data[rows[j] + delay][1]
+indices_rebal_train = indices[0:int(0.7*len(mel_slices_rebal))]
+indices_rebal_val = indices[int(0.7*len(mel_slices_rebal)):int(0.9*len(mel_slices_rebal))]
+indices_rebal_test = indices[int(0.9*len(mel_slices_rebal)):len(mel_slices_rebal)]
 
-        yield samples, targets
+assert len(indices_rebal_test)+len(indices_rebal_train)+len(indices_rebal_val) == len(mel_slices_rebal)
 
-      
-#%%
-        
-def generator(data,labels,batch_size=32):
-    while True:
-        for i in range(0,len(data),batch_size):
-            slices = data[i:i+batch_size]
-            labels_temp = np.array(labels[i:i+batch_size])
-            yield (slices, labels_temp)
-        
-train_gen = generator(mel_slices_train,labels_train,32)
+
+mel_slices_rebal_train = np.array([mel_slices_rebal[i] for i in indices_rebal_train])
+labels_rebal_train = np.array([labels_rebal[i] for i in indices_rebal_train])
+
+mel_slices_rebal_val = np.array([mel_slices_rebal[i] for i in indices_rebal_val])
+labels_rebal_val = np.array([labels_rebal[i] for i in indices_rebal_val])
+
+mel_slices_rebal_test = np.array([mel_slices_rebal[i] for i in indices_rebal_test])
+labels_rebal_test = np.array([labels_rebal[i] for i in indices_rebal_test])
+
+assert len(mel_slices_rebal_train) == len(labels_rebal_train)
+assert len(mel_slices_rebal_val) == len(labels_rebal_val)
+assert len(mel_slices_rebal_test) == len(labels_rebal_test)
 
 
 #%%
 
-history = model.fit_generator(
-        train_gen,
-        steps_per_epoch = 225,
-        epochs = 100
-        )
-
+print(sum(labels_rebal_train)/len(labels_rebal_train))
+print(sum(labels_rebal_val)/len(labels_rebal_val))
+print(sum(labels_rebal_test)/len(labels_rebal_test))

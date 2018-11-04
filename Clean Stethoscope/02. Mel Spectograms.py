@@ -32,11 +32,11 @@ signals_mono = [signals[i].T[0] for i in range(len(signals))]
 
 ''' GENERATE MEL SPECTOGRAMS FOR SIGNALS '''
 
-hop_length = 2550  # number of frames to jump when computing fft
+hop_length = 882  # number of frames to jump when computing fft
 fmin = 125  # bottom frequency to look at
 fmax = 500  # top frequency to look at
-n_mels = 45  # number of audio frequency bins
-n_fft = [8000, 11025, 14000]  # width of the fft windows
+n_mels = 55  # number of audio frequency bins
+n_fft = [7000, 9000, 11000]  # width of the fft windows
 
 
 # list of 10 mels, with depth 3
@@ -47,9 +47,9 @@ for i in range(len(signals_mono)):
     mel = [melspectrogram(
             signals_mono[i],
             sr = samprate,
-            hop_length = 2550,
+            hop_length = hop_length,
             n_fft = j,
-            n_mels = 45,
+            n_mels = 55,
             fmin = 125,
             fmax = 500) for j in n_fft]
     
@@ -185,23 +185,23 @@ plt.close()
 
 fmin = 125
 fmax = 500
-signalnum = 3
+signalnum = 0
 
 plt.figure(figsize=(10,15))
 
-meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=2550,n_fft=8000,fmin=fmin,fmax=fmax,n_mels=45)
+meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=882,n_fft=5000,fmin=fmin,fmax=fmax,n_mels=55)
 meltest_db = librosa.power_to_db(meltest,ref=np.max)
 plt.subplot(3,1,1)
 plt.title('FFT 8000 Freqs 45 Hop 2550')
 specshow(meltest_db,sr=samprate,x_axis='frames')
 
-meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=2550,n_fft=11025,fmin=fmin,fmax=fmax,n_mels=45)
+meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=882,n_fft=7000,fmin=fmin,fmax=fmax,n_mels=55)
 meltest_db = librosa.power_to_db(meltest,ref=np.max)
 plt.subplot(3,1,2)
 plt.title('FFT 11025 Freqs 45 Hop 2550')
 specshow(meltest_db,sr=samprate)
 
-meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=2550,n_fft=14000,fmin=fmin,fmax=fmax,n_mels=45)
+meltest = melspectrogram(signals_mono[signalnum],samprate,hop_length=882,n_fft=9000,fmin=fmin,fmax=fmax,n_mels=55)
 meltest_db = librosa.power_to_db(meltest,ref=np.max)
 plt.subplot(3,1,3)
 plt.title('FFT 14000 Freqs 45 Hop 2550')
