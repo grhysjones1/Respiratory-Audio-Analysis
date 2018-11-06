@@ -18,11 +18,11 @@ warnings.filterwarnings('ignore')
 
 ''' GENERATE MEL SPECTOGRAMS FOR SIGNALS '''
 
-hop_length = 882  # number of frames to jump when computing fft
+hop_length = 411  # number of frames to jump when computing fft
 fmin = 125  # bottom frequency to look at
 fmax = 500  # top frequency to look at
 n_mels = 55  # number of audio frequency bins
-n_fft = [7000, 9000, 11000]  # width of the fft windows
+n_fft = [20000, 21000, 22000]  # width of the fft windows
 
 # list of 10 mels, with depth 3
 mel_db_list = []
@@ -53,6 +53,7 @@ for i in range(len(n_fft)):
     plt.subplot(3,1,i+1)
     plt.title(' FFT Window Length = {}'.format(n_fft[i]),weight='bold',pad=10)
     specshow(mel_db_list[signal_num][:,:,i],sr=samprate,x_axis='frames')
+#plt.savefig(filepath+'FFTWindow {} hop_length {}.png'.format(str(n_fft),hop_length),dpi=900)
 plt.show()
 plt.close()
 

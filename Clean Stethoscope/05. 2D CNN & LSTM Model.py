@@ -100,13 +100,6 @@ plt.close()
 from sklearn.metrics import roc_curve, precision_recall_curve, precision_score, recall_score, f1_score
 from sklearn.utils.fixes import signature
 
-# calculate model test predictions
-y_pred = model.predict(mel_slices_rebal_test)
-
-# calculate necessary metrics
-fpr, tpr, thresholds = roc_curve(y_test,y_pred)
-precision, recall, _ = precision_recall_curve(y_test, y_pred)
-
 # plot ROC and precision/recall curve
 fig,axs = plt.subplots(1,2,figsize=(15,5))
 

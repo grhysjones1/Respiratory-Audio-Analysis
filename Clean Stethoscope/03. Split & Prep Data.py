@@ -12,7 +12,7 @@ Created on Fri Nov  2 15:49:09 2018
 
 from sklearn.preprocessing import scale
 
-window_len = 25
+window_len = 99  # this should always be odd so there's a middle window frame
 
 mel_slices_normed_list = []
 for i in range(len(mel_db_list)):
@@ -68,6 +68,11 @@ from sklearn.model_selection import train_test_split
 mel_slices_train, mel_slices_test, labels_train, labels_test = train_test_split(mel_slices_normed_list,labels_list_shrunk,test_size=0.1)
 mel_slices_train, mel_slices_val, labels_train, labels_val = train_test_split(mel_slices_train,labels_train,test_size=0.222)
 
+# turn to numpy arrays
+mel_slices_train = np.array(mel_slices_train)
+mel_slices_val = np.array(mel_slices_val)
+mel_slices_test = np.array(mel_slices_test)
+
 assert len(mel_slices_train) == len(labels_train)
 assert len(mel_slices_val) == len(labels_val)
 assert len(mel_slices_test) == len(labels_test)
@@ -115,6 +120,11 @@ labels_rebal = np.concatenate((np.ones(len(pos_mel_slices)) , np.zeros(len(neg_m
 from sklearn.model_selection import train_test_split
 mel_slices_rebal_train, mel_slices_rebal_test, labels_rebal_train, labels_rebal_test = train_test_split(mel_slices_rebal,labels_rebal,test_size=0.1)
 mel_slices_rebal_train, mel_slices_rebal_val, labels_rebal_train, labels_rebal_val = train_test_split(mel_slices_rebal_train,labels_rebal_train,test_size=0.222)
+
+# turn to numpy arrays
+mel_slices_rebal_train = np.array(mel_slices_rebal_train)
+mel_slices_rebal_val = np.array(mel_slices_rebal_val)
+mel_slices_rebal_test = np.array(mel_slices_rebal_test)
 
 assert len(mel_slices_rebal_train) == len(labels_rebal_train)
 assert len(mel_slices_rebal_val) == len(labels_rebal_val)
