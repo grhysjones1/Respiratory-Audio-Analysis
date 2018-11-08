@@ -8,115 +8,56 @@ Created on Mon Oct 29 14:10:46 2018
 
 #%%
 
-''' IMPORT AUDIO SIGNALS '''
+''' DEFINE FUNCTIONS '''
+
+def get_signals(filename,trim_length):
+    
+    # read in audio file as numpy array
+    sample = wave.open(filename,'r')
+    nframes = sample.getnframes()
+    wav = wavfile.read(filename)[1]
+    signal = wav[0:nframes*2]
+    
+    # normalize
+    signal = signal / (2.**15)  # normalize by 16bit width
+    
+    # trim to given length
+    signal = signal[0:trim_length]
+    
+    # transpose and make mono
+    signal_mono = signal.T[0]
+    
+    return signal_mono
+
+
+def binarize(signal,ampthresh,fwdthresh):
+    # create list of 1s and 0s where annotation is above given threshold
+    binarized_signal = [1 if signal[i] > ampthresh else 0 for i in range(len(signal))]
+    # supress noise in binary signal due to anologue sound capture
+    for i in range(len(binarized_signal)):
+        if binarized_signal[i] == 1: 
+            for j in range(1,fwdthresh):
+                if i+j < len(binarized_signal):
+                    binarized_signal[i+j] = 0
+                else:
+                    j = fwdthresh - i
+                    binarized_signal[i+j] = 0 
+    return binarized_signal     
+
+
+
+#%%
+
+''' GLOBAL VARIABLES '''
 
 # Write signal data to variables
 from scipy.io import wavfile
 import wave
 import numpy as np
 samprate = 44100
-
-def get_wav(file_name, nsamples):
-    wav = wavfile.read(file_name)[1]
-    signal = wav[0:nsamples]
-    return signal
-
+trim_length = 2650000
+fwdthresh = 15000
 filepath = "/users/garethjones/Documents/Data Science/Feebris/Data/Clean Stethoscope/"
-
-# work out length of each sample in frames
-sampleframes = []
-for i in range(1,11):
-    sample = wave.open(filepath+"Signals/Signal {}.wav".format(i),'r')
-    nframes = sample.getnframes()
-    sampleframes.append(nframes)
-    
-# import signals and store
-signals = [get_wav(filepath+"Signals/Signal {}.wav".format(i+1),sampleframes[i]*2) for i in range(10)]
-    
-# create list of second intervals for each sample
-samplesecs = [np.arange(1,len(signals[i])+1) / samprate for i in range(10)]
-    
-
-
-''' IMPORT ANNOTATION AUDIO SIGNALS '''
-
-# work out length of each sample in frames
-annotationframes = []
-for i in range(1,11):
-    sample = wave.open(filepath+"Annotations/Annotation {}.wav".format(i),'r')
-    nframes = sample.getnframes()
-    annotationframes.append(nframes)
-    
-# import signals and store
-annotations = [get_wav(filepath+"Annotations/Annotation {}.wav".format(i+1),annotationframes[i]*2) for i in range(10)]
-
-
-
-''' NORMALIZE SIGNALS TO 1 '''
-
-# Normalize signals
-for i in range(len(signals)):
-    signals[i] = signals[i] / (2.**15)
-
-for i in range(len(annotations)):
-    annotations[i] = annotations[i] / (2.**15)    
-
-
-
-''' CUT SIGNALS TO SAME LENGTH '''
-
-# 2,650,000 is the right length based on eye-balling the data
-# need to automate this
-for i in range(len(signals)):
-    signals[i] = signals[i][0:2650000]
-
-for i in range(len(signals)):
-    annotations[i] = annotations[i][0:2650000]
-
-# test to ensure lengths are the same
-for i in range(len(signals)):
-    assert len(signals[i]) == len(annotations[i])
-
-
-
-''' MAKE SIGNALS & ANNOTATIONS MONO '''
-
-# select only one channel of stereo signal, and transpose ready for melspectogram
-signals_mono = [signals[i].T[0] for i in range(len(signals))]
-
-# make annotations one channel, transposed, absolute
-annotations_mono = [abs(annotations[i].T[0]) for i in range(len(annotations))]
-
-
-
-''' VISUALISE '''
-
-import matplotlib.pyplot as plt
-
-signal_num = 4  # set which signal you want to see
-
-fig, axs = plt.subplots(2,1,figsize=(10,6))
-plt.subplots_adjust(hspace=0.5)
-plt.suptitle('Input Signal & Annotation Audio #{}'.format(signal_num),weight='bold')
-
-axs[0].plot(signals_mono[signal_num])
-axs[0].set_xlim(xmin=0,xmax=len(signals_mono[signal_num]))
-axs[0].set_title('Signal {}'.format(signal_num),pad=10)
-axs[0].spines['top'].set_color('none')
-axs[0].spines['right'].set_color('none')
-
-axs[1].plot(annotations_mono[signal_num])
-axs[1].set_xlim(xmin=0,xmax=len(annotations_mono[signal_num]))
-axs[1].set_title('Annotations {}'.format(signal_num),pad=10)
-axs[1].spines['top'].set_color('none')
-axs[1].spines['right'].set_color('none')
-
-plt.show()
-plt.close()
-
-
-
-''' GLOBAL VARIABLES FOR REFERENCE '''
 
 # known clicks per sample
 originalclickspersignal = {
@@ -135,64 +76,56 @@ thresholds = {
 
 
 
-''' TURN ANNOTATIONS INTO BINARY SIGNAL '''
+''' IMPORT AUDIO AND BINARIZE ANNOTATIONS '''
 
-# denote whenever amplitude is above threshold
-anno_gates = []
-for i in range(len(annotations_mono)):
-    gate_list = []
-    for j in range(len(annotations_mono[i])):
-        if annotations_mono[i][j] > thresholds['Annotation {}'.format(i+1)]: # this is amplitude threshold
-            x = 1
-        else:
-            x = 0
-        gate_list.append(x)
-    anno_gates.append(gate_list)
+# import respiratory and annotation signals
+signals_mono = [get_signals(filepath+"Signals/Signal {}.wav".format(i+1),trim_length) for i in range(10)]
+annotations_mono = [get_signals(filepath+"Annotations/Annotation {}.wav".format(i+1),trim_length) for i in range(10)]
 
+# test to ensure lengths are the same
+for i in range(len(signals_mono)):
+    assert len(signals_mono[i]) == len(annotations_mono[i])
 
+# create binary signals
+anno_gates = [binarize(annotations_mono[i],thresholds['Annotation {}'.format(i+1)],fwdthresh) for i in range(len(annotations_mono))]
 
-''' SUPRESS NOISE IN BINARY ANNOTATIONS '''
-
-# ensure noise is removed so there's exact number of clicks
-fwd_frame_thresh = 15000
-
-size_anno_gates = []
-for i in range(len(anno_gates)):
-    for j in range(len(anno_gates[i])):
-        if anno_gates[i][j] == 1:
-            for k in range(1,fwd_frame_thresh): # this is the forward threshold for silencing frames
-                if j+k < len(anno_gates[i]):
-                    anno_gates[i][j+k] = 0
-                else:
-                    k = fwd_frame_thresh - j
-                    anno_gates[i][j+k] = 0       
-    size_anno_gates.append(sum(anno_gates[i]))
-
-print(np.r_[list(newclickspersignal.values())] - np.r_[size_anno_gates])
+# find number of annotations in each binary signal
+sum_anno_gates = [sum(anno_gates[i]) for i in range(len(anno_gates))]
+print(np.r_[list(newclickspersignal.values())] - np.r_[sum_anno_gates])
 
 
 
-''' VISUALISE ANNOTATION MONO & ANNOTATION BINARY '''
+#%%
 
-signal_num = 1
+''' VISUALISE SIGNAL VS ANNOTATION '''
 
-fig, axs = plt.subplots(2,1,figsize=(10,6))
-plt.subplots_adjust(hspace=0.5)
-plt.suptitle('Annotations for Signal #{}'.format(signal_num),weight='bold')
+import matplotlib.pyplot as plt
 
-axs[0].plot(annotations_mono[signal_num])
-axs[0].set_title('Original Annotation Audio Signal (Mono)',pad=10)
-axs[0].set_xlim(xmin=0,xmax=len(annotations_mono[signal_num]))
-axs[0].set_ylim(ymin=0)
+signal_num = 4  # set which signal you want to see
+
+fig, axs = plt.subplots(3,1,figsize=(10,8))
+plt.subplots_adjust(hspace=0.7)
+plt.suptitle('Input Signal & Annotation #{}'.format(signal_num),weight='bold')
+
+axs[0].plot(signals_mono[signal_num])
+axs[0].set_title('Original Audio Signal {}'.format(signal_num),pad=10)
+axs[0].set_xlim(xmin=0,xmax=len(signals_mono[signal_num]))
 axs[0].spines['top'].set_color('none')
 axs[0].spines['right'].set_color('none')
 
-axs[1].plot(anno_gates[signal_num])
-axs[1].set_title('Binary Annotation Signal No Noise',pad=10)
-axs[1].set_xlim(xmin=0,xmax=len(anno_gates[signal_num]))
-axs[1].set_ylim(ymin=0)
+axs[1].plot(annotations_mono[signal_num])
+axs[1].set_title('Original Annotation Audio Signal (Mono)',pad=10)
+axs[1].set_xlim(xmin=0,xmax=len(annotations_mono[signal_num]))
+axs[2].set_ylim(ymin=0)
 axs[1].spines['top'].set_color('none')
 axs[1].spines['right'].set_color('none')
+
+axs[2].plot(anno_gates[signal_num])
+axs[2].set_title('Binary Annotation Signal No Noise',pad=10)
+axs[2].set_xlim(xmin=0,xmax=len(anno_gates[signal_num]))
+axs[2].set_ylim(ymin=0)
+axs[2].spines['top'].set_color('none')
+axs[2].spines['right'].set_color('none')
 
 plt.show()
 plt.close()
