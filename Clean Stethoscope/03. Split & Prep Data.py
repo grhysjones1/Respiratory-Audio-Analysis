@@ -139,3 +139,10 @@ print('Samples in Test Data = '+str(len(mel_slices_rebal_test)))
 print('Pos/Neg Ratio in Training = '+str('{:.3f}'.format(sum(labels_rebal_train)/len(labels_rebal_train))))
 print('Pos/Neg Ratio in Training = '+str('{:.3f}'.format(sum(labels_rebal_val)/len(labels_rebal_val))))
 print('Pos/Neg Ratio in Training = '+str('{:.3f}'.format(sum(labels_rebal_test)/len(labels_rebal_test))))
+
+
+#%%
+
+''' PICKLE AND SAVE TO GOOGLE DRIVE '''
+
+import pickle
