@@ -12,7 +12,7 @@ Created on Fri Nov  2 15:49:09 2018
 
 from sklearn.preprocessing import scale
 
-window_len = 99  # this should always be odd so there's a middle window frame
+window_len = 69  # this should always be odd so there's a middle window frame
 
 mel_slices_normed_list = []
 for i in range(len(mel_db_list)):

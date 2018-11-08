@@ -6,6 +6,8 @@ Created on Mon Oct 29 14:28:49 2018
 @author: garethjones
 """
 
+#%%
+
 ''' IMPORTS & GLOBALS '''
 
 import librosa
@@ -18,7 +20,7 @@ warnings.filterwarnings('ignore')
 
 ''' GENERATE MEL SPECTOGRAMS FOR SIGNALS '''
 
-hop_length = 411  # number of frames to jump when computing fft
+hop_length = 441  # number of frames to jump when computing fft
 fmin = 125  # bottom frequency to look at
 fmax = 500  # top frequency to look at
 n_mels = 55  # number of audio frequency bins
@@ -39,7 +41,6 @@ for i in range(len(signals_mono)):
 print('Shape of mel spectrograms = '+str(mel_db_list[0].shape))
 
 
-#%%
 
 ''' VISUALISE MEL SPECTROGRAMS FOR ONE SIGNAL '''
 
@@ -58,7 +59,6 @@ plt.show()
 plt.close()
 
 
-#%%
 
 ''' REDUCE ANNOTATIONS TO LENGTH OF MEL SPECTROGRAM '''
 
@@ -93,7 +93,6 @@ for i in range(len(anno_gates)):
     labels_list.append(labels)
     
     
-#%%
     
 ''' VISUALISE BINARY SIGNAL AND MEL SIZED ANNOTATIONS '''
 

@@ -64,7 +64,7 @@ print('Model Precision Score = {:.3f}'.format(precision_score(y_test, y_pred.rou
 # recall is how many of the breath onset frames in total the model managed to identify
 # if recall is low, then it still needs to find more of the breath onsets. meaning we want to make the image better probably
 print('Model Recall Score = {:.3f}'.format(recall_score(y_test, y_pred.round())))
-print('Model F1 Score = {:.3f}'.format(f1_score(y_test, y_pred.round()))+' (best at 1)')
+print('Model F1 Score = {:.3f}'.format(f1_score(y_test, y_pred.round())))
 
 
 #%%

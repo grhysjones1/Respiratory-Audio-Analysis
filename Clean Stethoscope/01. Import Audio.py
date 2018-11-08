@@ -37,7 +37,6 @@ signals = [get_wav(filepath+"Signals/Signal {}.wav".format(i+1),sampleframes[i]*
 samplesecs = [np.arange(1,len(signals[i])+1) / samprate for i in range(10)]
     
 
-#%%
 
 ''' IMPORT ANNOTATION AUDIO SIGNALS '''
 
@@ -52,7 +51,6 @@ for i in range(1,11):
 annotations = [get_wav(filepath+"Annotations/Annotation {}.wav".format(i+1),annotationframes[i]*2) for i in range(10)]
 
 
-#%%
 
 ''' NORMALIZE SIGNALS TO 1 '''
 
@@ -64,7 +62,6 @@ for i in range(len(annotations)):
     annotations[i] = annotations[i] / (2.**15)    
 
 
-#%%
 
 ''' CUT SIGNALS TO SAME LENGTH '''
 
@@ -81,7 +78,6 @@ for i in range(len(signals)):
     assert len(signals[i]) == len(annotations[i])
 
 
-#%%
 
 ''' MAKE SIGNALS & ANNOTATIONS MONO '''
 
@@ -92,7 +88,6 @@ signals_mono = [signals[i].T[0] for i in range(len(signals))]
 annotations_mono = [abs(annotations[i].T[0]) for i in range(len(annotations))]
 
 
-#%%
 
 ''' VISUALISE '''
 
@@ -120,7 +115,6 @@ plt.show()
 plt.close()
 
 
-#%%
 
 ''' GLOBAL VARIABLES FOR REFERENCE '''
 
@@ -140,7 +134,6 @@ thresholds = {
         'Annotation 6' : 0.1, 'Annotation 7' : 0.095, 'Annotation 8' : 0.1, 'Annotation 9' : 0.05, 'Annotation 10' : 0.1}
 
 
-#%%
 
 ''' TURN ANNOTATIONS INTO BINARY SIGNAL '''
 
@@ -157,7 +150,6 @@ for i in range(len(annotations_mono)):
     anno_gates.append(gate_list)
 
 
-#%%
 
 ''' SUPRESS NOISE IN BINARY ANNOTATIONS '''
 
@@ -179,7 +171,6 @@ for i in range(len(anno_gates)):
 print(np.r_[list(newclickspersignal.values())] - np.r_[size_anno_gates])
 
 
-#%% 
 
 ''' VISUALISE ANNOTATION MONO & ANNOTATION BINARY '''
 
