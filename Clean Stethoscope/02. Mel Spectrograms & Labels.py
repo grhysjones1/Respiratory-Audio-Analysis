@@ -18,29 +18,66 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-''' GENERATE MEL SPECTOGRAMS FOR SIGNALS '''
 
-hop_length = 441  # number of frames to jump when computing fft
-fmin = 125  # bottom frequency to look at
-fmax = 500  # top frequency to look at
-n_mels = 55  # number of audio frequency bins
-n_fft = [20000, 21000, 22000]  # width of the fft windows
+''' DEFINE FUNCTIONS '''
 
-# list of 10 mels, with depth 3
-mel_db_list = []
-for i in range(len(signals_mono)):    
+def make_stacked_mels(mono_signal,n_fft,samprate,hop_length,fmin,fmax,n_mels):     
     # create 3 mel spectrograms with different fft window size, all other variables the same
     mel = [melspectrogram(signals_mono[i], sr=samprate, hop_length=hop_length, n_fft=j, n_mels=n_mels, fmin=fmin, fmax=fmax) for j in n_fft]
     # turn spectrograms into log values
     mel_db = [librosa.power_to_db(mel[k],ref=np.max) for k in range(len(mel))]
     # re-stack these spectrograms into a single array
-    mel_db = np.stack(mel_db,axis=-1)
-    # put all spectrograms into a single list
-    mel_db_list.append(mel_db)
+    mel_db = np.stack(mel_db,axis=-1)  
+    return mel_db
+
+
+def reduce_annotations(annotation_signal,hop_length,window_size):
+    
+    indices = list(np.arange(0,len(annotation_signal),hop_length))
+    
+    labels = []
+    
+    for i in indices:    
+        if ((i - window_size/2) > 0) & ((i + window_size/2) < len(annotation_signal)):
+            label_window = annotation_signal[int(i-window_size/2):int(i+window_size/2)]
+            max_label = max(label_window)
+            labels.append(max_label)
+        
+        elif (i - window_size/2) < 0:
+            label_window = annotation_signal[0:int(i+window_size/2)]
+            max_label = max(label_window)
+            labels.append(max_label)
+        
+        elif (i + window_size/2) > len(annotation_signal):
+            label_window = annotation_signal[int(i-window_size/2):len(annotation_signal)]
+            max_label = max(label_window)
+            labels.append(max_label)
+    
+    return labels
+
+
+
+''' DEFINE VALUES AND RUN FUNCTIONS '''
+
+samprate = 44100
+hop_length = 441
+fmin = 125
+fmax = 500
+n_mels = 55
+n_fft = [20000,21000,22000]
+window_size = n_fft[1]
+
+mel_db_list = [make_stacked_mels(signals_mono[i],n_fft) for i in range(len(signals_mono))]
+labels_list = [reduce_annotations(anno_gates[i],hop_length,window_size) for i in range(len(anno_gates))]
+
+for i in range(len(labels_list)):
+    assert len(labels_list[i]) == mel_db_list[i].shape[1]
 
 print('Shape of mel spectrograms = '+str(mel_db_list[0].shape))
 
 
+
+#%%
 
 ''' VISUALISE MEL SPECTROGRAMS FOR ONE SIGNAL '''
 
@@ -59,41 +96,7 @@ plt.show()
 plt.close()
 
 
-
-''' REDUCE ANNOTATIONS TO LENGTH OF MEL SPECTROGRAM '''
-
-# set the search window and hop size to same as the melspectrogram
-hop_size = hop_length
-search_window = n_fft[1]
-
-# find index points to look at in annotation signal
-indices = list(np.arange(0,len(anno_gates[0]),hop_length))
-
-# now look across the annotation signal and max if there's a 1 in the window frame
-labels_list = []
-for i in range(len(anno_gates)):
-    labels = []
-    
-    for j in indices:    
-        if ((j - search_window/2) > 0) & ((j + search_window/2) < len(anno_gates[i])):
-            label_window = anno_gates[i][int(j-search_window/2):int(j+search_window/2)]
-            max_label = max(label_window)
-            labels.append(max_label)
-        
-        elif (j - search_window/2) < 0:
-            label_window = anno_gates[i][0:int(j+search_window/2)]
-            max_label = max(label_window)
-            labels.append(max_label)
-        
-        elif (j + search_window/2) > len(anno_gates[i]):
-            label_window = anno_gates[i][int(j-search_window/2):len(anno_gates[i])]
-            max_label = max(label_window)
-            labels.append(max_label)
-    
-    labels_list.append(labels)
-    
-    
-    
+#%%
 ''' VISUALISE BINARY SIGNAL AND MEL SIZED ANNOTATIONS '''
 
 signal_num = 1
@@ -118,6 +121,7 @@ axs[1].spines['right'].set_color('none')
 
 plt.show()
 plt.close()
+
 
 
 #%%
