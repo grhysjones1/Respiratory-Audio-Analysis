@@ -31,8 +31,10 @@ def get_signals(filename,trim_length):
 
 
 def binarize(signal,ampthresh,fwdthresh):
+    
     # create list of 1s and 0s where annotation is above given threshold
     binarized_signal = [1 if signal[i] > ampthresh else 0 for i in range(len(signal))]
+    
     # supress noise in binary signal due to anologue sound capture
     for i in range(len(binarized_signal)):
         if binarized_signal[i] == 1: 
@@ -42,6 +44,7 @@ def binarize(signal,ampthresh,fwdthresh):
                 else:
                     j = fwdthresh - i
                     binarized_signal[i+j] = 0 
+    
     return binarized_signal     
 
 

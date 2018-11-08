@@ -18,7 +18,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-
 ''' DEFINE FUNCTIONS '''
 
 def make_stacked_mels(mono_signal,n_fft,samprate,hop_length,fmin,fmax,n_mels):     
@@ -34,7 +33,6 @@ def make_stacked_mels(mono_signal,n_fft,samprate,hop_length,fmin,fmax,n_mels):
 def reduce_annotations(annotation_signal,hop_length,window_size):
     
     indices = list(np.arange(0,len(annotation_signal),hop_length))
-    
     labels = []
     
     for i in indices:    
@@ -56,6 +54,7 @@ def reduce_annotations(annotation_signal,hop_length,window_size):
     return labels
 
 
+#%%
 
 ''' DEFINE VALUES AND RUN FUNCTIONS '''
 
@@ -67,11 +66,11 @@ n_mels = 55
 n_fft = [20000,21000,22000]
 window_size = n_fft[1]
 
-mel_db_list = [make_stacked_mels(signals_mono[i],n_fft) for i in range(len(signals_mono))]
-labels_list = [reduce_annotations(anno_gates[i],hop_length,window_size) for i in range(len(anno_gates))]
+mel_db_list = [make_stacked_mels(signals_mono[i], n_fft, samprate, hop_length, fmin, fmax, n_mels) for i in range(len(signals_mono))]
+mel_db_labels_list = [reduce_annotations(anno_gates[i],hop_length,window_size) for i in range(len(anno_gates))]
 
-for i in range(len(labels_list)):
-    assert len(labels_list[i]) == mel_db_list[i].shape[1]
+for i in range(len(mel_db_labels_list)):
+    assert len(mel_db_labels_list[i]) == mel_db_list[i].shape[1]
 
 print('Shape of mel spectrograms = '+str(mel_db_list[0].shape))
 
@@ -97,6 +96,7 @@ plt.close()
 
 
 #%%
+
 ''' VISUALISE BINARY SIGNAL AND MEL SIZED ANNOTATIONS '''
 
 signal_num = 1
@@ -121,7 +121,6 @@ axs[1].spines['right'].set_color('none')
 
 plt.show()
 plt.close()
-
 
 
 #%%
