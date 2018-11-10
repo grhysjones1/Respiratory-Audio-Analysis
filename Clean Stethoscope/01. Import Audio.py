@@ -104,7 +104,7 @@ print(np.r_[list(newclickspersignal.values())] - np.r_[sum_anno_gates])
 
 import matplotlib.pyplot as plt
 
-signal_num = 4  # set which signal you want to see
+signal_num = 2  # set which signal you want to see
 
 fig, axs = plt.subplots(3,1,figsize=(10,8))
 plt.subplots_adjust(hspace=0.7)

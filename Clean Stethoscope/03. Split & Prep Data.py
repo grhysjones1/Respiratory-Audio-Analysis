@@ -17,7 +17,7 @@ window_len = 69  # this should always be odd so there's a middle window frame
 mel_slices_normed_list = []
 for i in range(len(mel_db_list)):
     
-    for j in range(mel_db.shape[1] - window_len):
+    for j in range(mel_db_list[0].shape[1] - window_len):
         slices = mel_db_list[i][:,j:j+window_len,:]
         
         # normalize to zero mean and unit variance along rows of each spectogram within each slice
@@ -39,7 +39,7 @@ for i in range(len(labels_list)):
 
     for j in range(int(window_len/2),mel_db.shape[1]-int(window_len/2)-1):
         
-        if labels_list[i][j] == 1:
+        if mel_db_labels_list[i][j] == 1:
             x = 1
         else:
             x = 0
@@ -50,10 +50,10 @@ for i in range(len(labels_list)):
 ''' CALCULATE DIFFERENCE IN NUMBER OF LABELS '''
 
 # number of indices a single signal lasts for
-signal_segment = int(len(labels_list_shrunk)/len(labels_list))
+signal_segment = int(len(labels_list_shrunk)/len(mel_db_labels_list))
 
-labels_sums = [sum(labels_list[i]) for i in range(len(labels_list))]
-labels_shrunk_sums = [sum(labels_list_shrunk[i*signal_segment:(i+1)*signal_segment]) for i in range(len(labels_list))]
+labels_sums = [sum(mel_db_labels_list[i]) for i in range(len(mel_db_labels_list))]
+labels_shrunk_sums = [sum(labels_list_shrunk[i*signal_segment:(i+1)*signal_segment]) for i in range(len(mel_db_labels_list))]
 print('Original positive labels = ' + str(labels_sums))
 print('New shrunk positive labels = ' + str(labels_shrunk_sums))
 

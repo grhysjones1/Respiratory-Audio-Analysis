@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 
 def make_stacked_mels(mono_signal,n_fft,samprate,hop_length,fmin,fmax,n_mels):     
     # create 3 mel spectrograms with different fft window size, all other variables the same
-    mel = [melspectrogram(signals_mono[i], sr=samprate, hop_length=hop_length, n_fft=j, n_mels=n_mels, fmin=fmin, fmax=fmax) for j in n_fft]
+    mel = [melspectrogram(mono_signal, sr=samprate, hop_length=hop_length, n_fft=j, n_mels=n_mels, fmin=fmin, fmax=fmax) for j in n_fft]
     # turn spectrograms into log values
     mel_db = [librosa.power_to_db(mel[k],ref=np.max) for k in range(len(mel))]
     # re-stack these spectrograms into a single array
@@ -75,12 +75,11 @@ for i in range(len(mel_db_labels_list)):
 print('Shape of mel spectrograms = '+str(mel_db_list[0].shape))
 
 
-
 #%%
 
 ''' VISUALISE MEL SPECTROGRAMS FOR ONE SIGNAL '''
 
-signal_num = 0
+signal_num = 9
 
 plt.figure(figsize=(10,8))
 plt.subplots_adjust(hspace=0.63)
