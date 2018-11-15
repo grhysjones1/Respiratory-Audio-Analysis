@@ -60,8 +60,13 @@ def preprocess_pipeline(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_wi
     # create instance of the preprocessor
     preprocessor = DataPreprocessing(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
     
-    # window the mel spectrograms and labels, move by one frame fwd at a time, to send to model for training
-    melslices_list, melslices_labels_list = map(list,zip(*[preprocessor.data_label_split(mel_db_list[i], mel_db_labels_list[i]) for i in range(10)]))
+    # slice the mel spectrograms by model_hop_length frames fwd and model_window_size wide at a time
+    # label mel slices as 1 if middle frame of spectrogram slice is also 1
+    #melslices_list, melslices_labels_list = map(list,zip(*[preprocessor.split_mels_labels_mid_frame(mel_db_list[i], mel_db_labels_list[i]) for i in range(10)]))
+    
+    # slice the mel spectrograms by model_hop_length frames fwd and model_window_size wide at a time
+    # label mel slices as 1 if max of corresponding spectrogram slice is also 1
+    melslices_list, melslices_labels_list = map(list,zip(*[preprocessor.split_mels_labels_max_frame(mel_db_list[i], mel_db_labels_list[i]) for i in range(10)]))
     
     # rebalance dataset by undersampling 'negative' frames where there is no breath onset. store in a list
     melslices_rebal_list, labels_rebal_list = map(list,zip(*[preprocessor.balance_data(melslices_list[i],melslices_labels_list[i]) for i in range(len(melslices_list))]))

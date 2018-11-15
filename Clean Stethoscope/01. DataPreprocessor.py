@@ -149,16 +149,31 @@ class DataPreprocessing:
     
     
     # slice spectrograms into given window length, moved by model_hop_length frames through signal, to generate data to send to model
-    def data_label_split(self,spectrogram,labels):   
+    def split_mels_labels_mid_frame(self,spectrogram,labels):   
     
         # ensure window size is odd so there's a middle window frame to centre on
         assert self.model_window_size % 2 != 0  
         
-        # move window 1 frame at a time through spectrogram to create slices
+        # move window model_hop_length frames at a time through spectrogram to create slices
         spec_sliced = [spectrogram[:,i*self.model_hop_length:i*self.model_hop_length+self.model_window_size,:] for i in range(int((spectrogram.shape[1] - self.model_window_size)/self.model_hop_length))]
         
-        # select label from labels list where index is the position of middle frame in spectrogram slice
+        # label as 1 if middle frame of given spectrogram slice is 1, else 0
         labels = [1 if labels[i] == 1 else 0 for i in range(int(self.model_window_size/2),spectrogram.shape[1]-int(self.model_window_size/2)-self.model_hop_length,self.model_hop_length)]
+        
+        return spec_sliced, labels
+    
+    
+    # slice spectrograms into given window length, moved by model_hop_length frames through signal, to generate data to send to model
+    def split_mels_labels_max_frame(self,spectrogram,labels):   
+    
+        # ensure window size is odd so there's a middle window frame to centre on
+        assert self.model_window_size % 2 != 0  
+        
+        # move window model_hop_length frames at a time through spectrogram to create slices
+        spec_sliced = [spectrogram[:,i*self.model_hop_length:i*self.model_hop_length+self.model_window_size,:] for i in range(int((spectrogram.shape[1] - self.model_window_size)/self.model_hop_length))]
+        
+        # label as 1 if corresponding window of spectrogram has a label within it
+        labels = [1 if max(labels[i*self.model_hop_length:i*self.model_hop_length+self.model_window_size]) == 1 else 0 for i in range(int((spectrogram.shape[1] - self.model_window_size)/self.model_hop_length))]      
         
         return spec_sliced, labels
     
