@@ -24,13 +24,12 @@ from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_sc
 class DataPreprocessing:
     
     # initialise class variables
-    def __init__(self,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size):
+    def __init__(self,label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size):
         self.samprate = 44100  # sample rate of audio signals
         self.trim_length = 2650000  # number of frames to trim audio input signals to
         self.fwdthresh = 15000  # number of frames in annotation signal to surpress to 0 after a positive label is found
-        self.ampthresh = {  # eyeballed thresholds for annotation  audio signals (each signal differs depending on loudness)
-        'Annotation 1' : 0.1, 'Annotation 2' : 0.1, 'Annotation 3' : 0.07, 'Annotation 4' : 0.1, 'Annotation 5' : 0.03,
-        'Annotation 6' : 0.1, 'Annotation 7' : 0.095, 'Annotation 8' : 0.1, 'Annotation 9' : 0.05, 'Annotation 10' : 0.1}
+        
+        self.label_error = label_error  # size of error allowed in labelling respirations (in frames), set here to 250ms
         self.fft_hop_length = fft_hop_length  # hop length (in audio frames) 
         self.fmin = fmin  # min frequency limit for mel spectrograms
         self.fmax = fmax  # max frequency limit for mel spectrograms
@@ -63,10 +62,10 @@ class DataPreprocessing:
     
     
     # set annotation signals to be binary step functions, one positive label per breath onset
-    def binarize(self,signal):
+    def binarize(self,signal,ampthresh):
         
         # create list of 1s and 0s where annotation is above given threshold
-        binarized_signal = [1 if signal[i] > self.ampthresh else 0 for i in range(len(signal))]
+        binarized_signal = [1 if signal[i] > ampthresh else 0 for i in range(len(signal))]
         
         # supress noise in binary signal due to anologue sound capture
         for i in range(len(binarized_signal)):
@@ -94,12 +93,12 @@ class DataPreprocessing:
         return mel_db
     
     
-    # reduce the length of the annotation signals to the same length as mel spectrograms
-    def reduce_annotations(self,annotation_signal):
+    # reduce the length of the annotation signals to the same length as mel spectrograms, by using the fft_window size
+    def label_mels_by_fft(self,annotation_signal):
         
         # get indicies of annotation array to centre search window at, given by fft_hop_length of mel spectrograms
         indices = list(np.arange(0,len(annotation_signal),self.fft_hop_length))
-        labels = []
+        mel_labels = []
         
         # for each given annotation index position, search back and forth by half the fft_window_size for any positive labels
         # if positive label is found within the window, set associated vertical slice of mel spectrogram to be positive
@@ -107,19 +106,46 @@ class DataPreprocessing:
             if ((i - self.fft_window_size/2) > 0) & ((i + self.fft_window_size/2) < len(annotation_signal)):
                 label_window = annotation_signal[int(i-self.fft_window_size/2):int(i+self.fft_window_size/2)]
                 max_label = max(label_window)
-                labels.append(max_label)
+                mel_labels.append(max_label)
             
             elif (i - self.fft_window_size/2) < 0:
                 label_window = annotation_signal[0:int(i+self.fft_window_size/2)]
                 max_label = max(label_window)
-                labels.append(max_label)
+                mel_labels.append(max_label)
             
             elif (i + self.fft_window_size/2) > len(annotation_signal):
                 label_window = annotation_signal[int(i-self.fft_window_size/2):len(annotation_signal)]
                 max_label = max(label_window)
-                labels.append(max_label)
+                mel_labels.append(max_label)
         
-        return labels
+        return mel_labels
+    
+    
+    # reduce the length of the annotation signals to the same length as mel spectrograms, by using a given time error
+    def label_mels_by_time(self,annotation_signal):
+        
+        # turn input list to np array
+        annotation_signal = np.array(annotation_signal)
+        
+        # find where the positive labels in the annotation signal are    
+        pos_label_indicies = [i for i, x in enumerate(annotation_signal) if x == 1]
+        
+        # set labels to 1 either side, by some time error in frames
+        for i in pos_label_indicies:
+            
+            if ((i - self.label_error/2) > 0) & ((i + self.label_error/2) < len(annotation_signal)):
+                annotation_signal[i-int(self.label_error/2):i+int(self.label_error/2)] = 1
+            
+            elif (i - self.label_error/2) < 0:
+                annotation_signal[0:i+int(self.label_error/2)] = 1
+                
+            elif (i + self.label_error/2) > len(annotation_signal):
+                annotation_signal[i-int(self.label_error/2):len(annotation_signal)] = 1
+        
+        # window annotation signal by mel_spectrogram fft_hop_length, and max each window for label
+        mel_labels = [max(annotation_signal[i*self.fft_hop_length:(i+1)*self.fft_hop_length]) for i in range(int(len(annotation_signal)/self.fft_hop_length)+1)]
+    
+        return mel_labels
     
     
     # slice spectrograms into given window length, moved by model_hop_length frames through signal, to generate data to send to model
@@ -222,4 +248,4 @@ class DataPreprocessing:
         melslices_val_std = np.array(melslices_val_std)
         
         return melslices_train_std, melslices_val_std, labels_train, labels_val
-    
+#%%
