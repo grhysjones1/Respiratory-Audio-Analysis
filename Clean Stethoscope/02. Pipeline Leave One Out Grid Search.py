@@ -11,10 +11,10 @@ Created on Thu Nov 15 16:54:01 2018
 
 
 # method to import audio
-def import_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size,filepath)
+def import_pipeline(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size,filepath):
     
-# create instance of the preprocessor
-    preprocessor = DataPreprocessing(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
+    # create instance of the preprocessor
+    preprocessor = DataPreprocessing(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
     
     # import respiratory signals, and store in a list
     signals_mono = [preprocessor.get_signals(filepath+"Signals/Signal {}.wav".format(i+1)) for i in range(10)]
@@ -34,16 +34,19 @@ def import_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_
 
 
 # method to generate mel spectrograms with different variables
-def melspec_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size):
+def melspec_pipeline(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size):
     
     # create instance of the preprocessor
-    preprocessor = DataPreprocessing(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
+    preprocessor = DataPreprocessing(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
     
     # create stacked mel spectrograms
     mel_db_list = [preprocessor.make_stacked_mels(signals_mono[i]) for i in range(len(signals_mono))]
     
-    # convert mel spectrogram to db values
-    mel_db_labels_list = [preprocessor.reduce_annotations(anno_gates[i]) for i in range(len(anno_gates))]
+    # label the mel spectrograms by fft window size
+    #mel_db_labels_list = [preprocessor.label_mels_by_fft(annotations_mono[i]) for i in range(len(annotations_mono))]
+    
+    # label the mel spectrograms by error in time
+    mel_db_labels_list = [preprocessor.label_mels_by_time(annotations_mono[i]) for i in range(len(annotations_mono))]
     
     for i in range(len(mel_db_labels_list)):
         assert len(mel_db_labels_list[i]) == mel_db_list[i].shape[1]
@@ -52,10 +55,10 @@ def melspec_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model
 
 
 # method to preprocess mel spectrograms to send to model
-def preprocess_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size):
+def preprocess_pipeline(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size):
     
     # create instance of the preprocessor
-    preprocessor = DataPreprocessing(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
+    preprocessor = DataPreprocessing(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
     
     # window the mel spectrograms and labels, move by one frame fwd at a time, to send to model for training
     melslices_list, melslices_labels_list = map(list,zip(*[preprocessor.data_label_split(mel_db_list[i], mel_db_labels_list[i]) for i in range(10)]))
@@ -91,6 +94,10 @@ def preprocess_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,mo
 
 # DataPreprocessor variables to be defined
 filepath = "/users/garethjones/Documents/Data Science/Feebris/Data/Clean Stethoscope/"  # filepath where audio signals are saved
+ampthresh = {  # eyeballed thresholds for annotation  audio signals (each signal differs depending on loudness)
+'Annotation 1' : 0.1, 'Annotation 2' : 0.1, 'Annotation 3' : 0.07, 'Annotation 4' : 0.1, 'Annotation 5' : 0.03,
+'Annotation 6' : 0.1, 'Annotation 7' : 0.095, 'Annotation 8' : 0.1, 'Annotation 9' : 0.05, 'Annotation 10' : 0.1}
+label_error = 441*25  # size of error allowed in labelling respirations (in frames), set here to 250ms
 fft_hop_length = 441  # hop length (in audio frames) of fourier window when calculating mel spectrogram
 fmin = 125  # min frequency limit for mel spectrograms (Hz)
 fmax = 500  # max frequency limit for mel spectrograms (Hz)
@@ -105,7 +112,7 @@ model_window_size = 15  # number of spectrogram frames to show to the model at a
 
 ''' IMPORT AUDIO PIPELINE '''
 
-signals_mono, annotations_mono = import_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size,filepath)
+signals_mono, annotations_mono = import_pipeline(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size,filepath)
 
 
 #%%
@@ -113,6 +120,7 @@ signals_mono, annotations_mono = import_pipeline(fft_hop_length,fmin,fmax,n_mels
 ''' CREATE MEL SPECTROGRAMS PIPELINE '''
 
 # make any changes to these variables as appropriate
+label_error = 441*25  # size of error allowed in labelling respirations (in frames), set here to 250ms
 fft_hop_length = 441  
 fmin = 125  
 fmax = 500
@@ -120,7 +128,7 @@ n_mels = 55
 n_fft = [20000,21000,22000]
 fft_window_size = n_fft[1]
 
-melslices_rebal_list, labels_rebal_list = melspec_pipeline(fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
+mel_db_list, mel_db_labels_list = melspec_pipeline(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size)
 
 
 #%%
@@ -139,6 +147,7 @@ for i in range(len(model_hop_length)):
     
     # create data
     X_train, X_val, X_test, y_train, y_val, y_test = preprocess_pipeline(
+            label_error = label_error,
             fft_hop_length = fft_hop_length,
             fmin = fmin,
             fmax = fmax,
