@@ -23,12 +23,13 @@ from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_sc
 
 class DataPreprocessing:
     
+    ''' METHODS FOR ALL PREPROCESSING '''
+    
     # initialise class variables
     def __init__(self,label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_window_size,model_hop_length,model_window_size):
         self.samprate = 44100  # sample rate of audio signals
         self.trim_length = 2650000  # number of frames to trim audio input signals to
         self.fwdthresh = 15000  # number of frames in annotation signal to surpress to 0 after a positive label is found
-        
         self.label_error = label_error  # size of error allowed in labelling respirations (in frames), set here to 250ms
         self.fft_hop_length = fft_hop_length  # hop length (in audio frames) 
         self.fmin = fmin  # min frequency limit for mel spectrograms
@@ -148,6 +149,7 @@ class DataPreprocessing:
         return mel_labels
     
     
+    
     # slice spectrograms into given window length, moved by model_hop_length frames through signal, to generate data to send to model
     def split_mels_labels_mid_frame(self,spectrogram,labels):   
     
@@ -206,6 +208,70 @@ class DataPreprocessing:
         return melslices_rebal, labels_rebal
     
     
+    # create validation set from training dataset
+    def create_val_set(self,melslices_train_std, labels_train):
+        melslices_train_std, melslices_val_std, labels_train, labels_val = train_test_split(melslices_train_std,labels_train,test_size=0.2)
+        melslices_train_std = np.array(melslices_train_std)
+        melslices_val_std = np.array(melslices_val_std)
+        
+        return melslices_train_std, melslices_val_std, labels_train, labels_val
+    
+    
+    ''' METHODS FOR FULL DATASET PREPROCESSING '''
+
+    # split out a test and train dataset when using full dataset
+    def test_split(self,melslices,labels):
+        
+        # flatten lists of melslices for splitting
+        melslices = [item for sublist in melslices for item in sublist]
+        labels = [item for sublist in labels for item in sublist]
+        
+        # split data by 10%
+        from sklearn.model_selection import train_test_split
+        melslices_train, melslices_test, labels_train, labels_test = train_test_split(melslices,labels,test_size=0.1)
+        
+        # turn to numpy arrays
+        melslices_train = np.array(melslices_train)
+        melslices_test = np.array(melslices_test)
+        
+        return melslices_train, melslices_test, labels_train, labels_test
+    
+    
+    # standardise train dataset using mean and std deviation of entire training set, use same values to standarise test set
+    def standardise(self,melslices_train,melslices_test):
+        
+        # find input mel_window size
+        window_width = melslices_train[0].shape[1]
+        org_train_len = len(melslices_train)
+        org_test_len = len(melslices_test)
+        
+        # re-combine data to normalize
+        melslices_train = np.hstack(melslices_train)
+        melslices_test = np.hstack(melslices_test)
+        
+        # standardise
+        train_mean = melslices_train.mean(axis=(0,1),keepdims=True)
+        train_std = melslices_train.std(axis=(0,1),keepdims=True)
+        melslices_train_std = (melslices_train - train_mean) / train_std
+    
+        # standardise test set with training set values
+        melslices_test_std = (melslices_test - train_mean) / train_std
+        
+        # split out data into slices again
+        melslices_train_std = [melslices_train_std[:,i*window_width:(i+1)*window_width:,:] for i in range(org_train_len)]
+        melslices_test_std = [melslices_test_std[:,i*window_width:(i+1)*window_width:,:] for i in range(org_test_len)]
+    
+        # convert to numpy arrays
+        melslices_train_std = np.array(melslices_train_std)
+        melslices_test_std = np.array(melslices_test_std)
+        
+        return melslices_train_std, melslices_test_std
+    
+    
+    
+    ''' METHODS FOR LEAVE ONE OUT PREPROCESSING '''
+    
+    
     # standardise train dataset using mean and std deviation of entire training set, use same values to standarise test set
     def train_standardise(self,melslices_train,labels_train):
         
@@ -255,12 +321,6 @@ class DataPreprocessing:
         
         return melslices_test_std
     
+
     
-    # create validation set from training dataset
-    def create_val_set(self,melslices_train_std, labels_train):
-        melslices_train_std, melslices_val_std, labels_train, labels_val = train_test_split(melslices_train_std,labels_train,test_size=0.2)
-        melslices_train_std = np.array(melslices_train_std)
-        melslices_val_std = np.array(melslices_val_std)
-        
-        return melslices_train_std, melslices_val_std, labels_train, labels_val
 #%%
