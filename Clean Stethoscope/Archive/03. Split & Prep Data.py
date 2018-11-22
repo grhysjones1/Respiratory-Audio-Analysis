@@ -104,7 +104,7 @@ assert (len(neg_mel_slices) + len(pos_mel_slices)) == len(mel_slices_normed_list
 
 # sample fewer negative (majority) classes
 neg_indices = np.arange(0,len(neg_mel_slices))
-neg_indices_sample = np.random.choice(neg_indices,len(pos_mel_slices))
+neg_indices_sample = np.random.choice(neg_indices,len(pos_mel_slices),replace=False)
 neg_indices_sample = np.sort(neg_indices_sample)
 
 # create down-sampled majority class dataset

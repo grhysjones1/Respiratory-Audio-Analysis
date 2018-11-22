@@ -193,7 +193,7 @@ class DataPreprocessing:
         
         # sample fewer negative (majority) slices to be same number as positive slices
         neg_indices = np.arange(0,len(neg_melslices))
-        neg_indices_sample = np.random.choice(neg_indices,len(pos_melslices))
+        neg_indices_sample = np.random.choice(neg_indices,len(pos_melslices),replace=False)
         neg_indices_sample = np.sort(neg_indices_sample)
         
         # create down-sampled majority class dataset
