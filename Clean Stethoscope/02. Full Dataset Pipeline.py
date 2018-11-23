@@ -41,10 +41,10 @@ def melspec_pipeline(label_error,fft_hop_length,fmin,fmax,n_mels,n_fft,fft_windo
     mel_db_list = [preprocessor.make_stacked_mels(signals_mono[i]) for i in range(len(signals_mono))]
     
     # label the mel spectrograms by fft window size
-    #mel_db_labels_list = [preprocessor.label_mels_by_fft(annotations_mono[i]) for i in range(len(annotations_mono))]
+    mel_db_labels_list = [preprocessor.label_mels_by_fft(annotations_mono[i]) for i in range(len(annotations_mono))]
     
     # label the mel spectrograms by error in time
-    mel_db_labels_list = [preprocessor.label_mels_by_time(annotations_mono[i]) for i in range(len(annotations_mono))]
+    #mel_db_labels_list = [preprocessor.label_mels_by_time(annotations_mono[i]) for i in range(len(annotations_mono))]
     
     for i in range(len(mel_db_labels_list)):
         assert len(mel_db_labels_list[i]) == mel_db_list[i].shape[1]
